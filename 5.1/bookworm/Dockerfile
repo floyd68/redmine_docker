@@ -17,11 +17,8 @@ RUN set -eux; \
 		curl \
 		wget \
 		\
-		bzr \
 		git \
-		mercurial \
 		openssh-client \
-		subversion \
 		\
 # we need "gsfonts" for generating PNGs of Gantt charts
 # and "ghostscript" for creating PDF thumbnails (in 4.1+)
@@ -36,7 +33,7 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*
 
 # grab gosu for easy step-down from root
-ENV GOSU_VERSION 1.17
+ENV GOSU_VERSION=1.17
 RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
@@ -64,21 +61,21 @@ RUN set -eux; \
 	gosu --version; \
 	gosu nobody true
 
-ENV RAILS_ENV production
+ENV RAILS_ENV=production
 WORKDIR /usr/src/redmine
 
 # https://github.com/docker-library/redmine/issues/138#issuecomment-438834176
 # (bundler needs this for running as an arbitrary user)
-ENV HOME /home/redmine
+ENV HOME=/home/redmine
 RUN set -eux; \
 	[ ! -d "$HOME" ]; \
 	mkdir -p "$HOME"; \
 	chown redmine:redmine "$HOME"; \
 	chmod 1777 "$HOME"
 
-ENV REDMINE_VERSION 5.1.3
-ENV REDMINE_DOWNLOAD_URL https://www.redmine.org/releases/redmine-5.1.3.tar.gz
-ENV REDMINE_DOWNLOAD_SHA256 8a22320fd9c940e6598f3ad5fb7a3933195c86068eee994ba6fcdc22c5cecb59
+ENV REDMINE_VERSION=5.1.3
+ENV REDMINE_DOWNLOAD_URL=https://www.redmine.org/releases/redmine-5.1.3.tar.gz
+ENV REDMINE_DOWNLOAD_SHA256=8a22320fd9c940e6598f3ad5fb7a3933195c86068eee994ba6fcdc22c5cecb59
 
 RUN set -eux; \
 # if we use wget here, we get certificate issues (https://github.com/docker-library/redmine/pull/249#issuecomment-984176479)
@@ -95,6 +92,16 @@ RUN set -eux; \
 	find log tmp -type d -exec chmod 1777 '{}' +
 
 RUN set -eux; \
+	git clone https://github.com/haru/redmine_theme_changer.git plugins/redmine_theme_changer; \
+	git clone https://github.com/taqueci/redmine_wysiwyg_editor.git plugins/redmine_wysiwyg_editor; \
+	git clone https://github.com/floyd68/redmine_slack_integration.git plugins/redmine_slack_integration; \
+	chown -R redmine:redmine plugins
+
+RUN set -eux; \
+	git clone https://github.com/mrliptontea/PurpleMine2.git public/themes/PurpleMine2; \
+	chown -R redmine:redmine public
+
+RUN set -eux; \
 	\
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
@@ -102,8 +109,6 @@ RUN set -eux; \
 		default-libmysqlclient-dev \
 		freetds-dev \
 		gcc \
-		libpq-dev \
-		libsqlite3-dev \
 		libxml2-dev \
 		libxslt-dev \
 		make \
@@ -121,7 +126,7 @@ RUN set -eux; \
 # fill up "database.yml" with bogus entries so the redmine Gemfile will pre-install all database adapter dependencies
 # https://github.com/redmine/redmine/blob/e9f9767089a4e3efbd73c35fc55c5c7eb85dd7d3/Gemfile#L50-L79
 	echo '# the following entries only exist to force `bundle install` to pre-install all database adapter dependencies -- they can be safely removed/ignored' > ./config/database.yml; \
-	for adapter in mysql2 postgresql sqlserver sqlite3; do \
+	for adapter in mysql2; do \
 		echo "$adapter:" >> ./config/database.yml; \
 		echo "  adapter: $adapter" >> ./config/database.yml; \
 	done; \
