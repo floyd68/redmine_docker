@@ -95,6 +95,7 @@ RUN set -eux; \
 	git clone https://github.com/haru/redmine_theme_changer.git plugins/redmine_theme_changer; \
 	git clone https://github.com/taqueci/redmine_wysiwyg_editor.git plugins/redmine_wysiwyg_editor; \
 	git clone https://github.com/floyd68/redmine_slack_integration.git plugins/redmine_slack_integration; \
+	git clone https://github.com/agileware-jp/redmine_issue_templates.git plugins/redmine_issue_templates; \
 	chown -R redmine:redmine plugins
 
 RUN set -eux; \
