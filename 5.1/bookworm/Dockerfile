@@ -13,26 +13,22 @@ RUN groupadd -r -g 999 redmine && useradd -r -g redmine -u 999 redmine
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
+		bzr \
 		ca-certificates \
-		curl \
-		wget \
-		\
-		git \
-		openssh-client \
-		\
-# we need "gsfonts" for generating PNGs of Gantt charts
-# and "ghostscript" for creating PDF thumbnails (in 4.1+)
 		ghostscript \
+		git \
 		gsfonts \
 		imagemagick \
-# grab tini for signal processing and zombie killing
+		openssh-client \
 		tini \
+		wget \
 	; \
 # allow imagemagick to use ghostscript for PDF -> PNG thumbnail conversion (4.1+)
 	sed -ri 's/(rights)="none" (pattern="PDF")/\1="read" \2/' /etc/ImageMagick-6/policy.xml; \
 	rm -rf /var/lib/apt/lists/*
 
 # grab gosu for easy step-down from root
+# https://github.com/tianon/gosu/releases
 ENV GOSU_VERSION=1.17
 RUN set -eux; \
 	\
@@ -73,20 +69,19 @@ RUN set -eux; \
 	chown redmine:redmine "$HOME"; \
 	chmod 1777 "$HOME"
 
-ENV REDMINE_VERSION=5.1.3
-ENV REDMINE_DOWNLOAD_URL=https://www.redmine.org/releases/redmine-5.1.3.tar.gz
-ENV REDMINE_DOWNLOAD_SHA256=8a22320fd9c940e6598f3ad5fb7a3933195c86068eee994ba6fcdc22c5cecb59
+ENV REDMINE_VERSION 5.1.6
+ENV REDMINE_DOWNLOAD_URL https://www.redmine.org/releases/redmine-5.1.6.tar.gz
+ENV REDMINE_DOWNLOAD_SHA256 d73584e74d692aa94644799d986df4e846fb59a43205c16bd857ed56cf0abed9
+ENV RAILS_LOG_TO_STDOUT true
 
 RUN set -eux; \
-# if we use wget here, we get certificate issues (https://github.com/docker-library/redmine/pull/249#issuecomment-984176479)
-	curl -fL -o redmine.tar.gz "$REDMINE_DOWNLOAD_URL"; \
+	wget -O redmine.tar.gz "$REDMINE_DOWNLOAD_URL"; \
 	echo "$REDMINE_DOWNLOAD_SHA256 *redmine.tar.gz" | sha256sum -c -; \
 	tar -xf redmine.tar.gz --strip-components=1; \
 	rm redmine.tar.gz files/delete.me log/delete.me; \
-	mkdir -p log public/plugin_assets sqlite tmp/pdf tmp/pids; \
+	# https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions
+	mkdir -p log public/assets public/plugin_assets sqlite tmp/pdf tmp/pids; \
 	chown -R redmine:redmine ./; \
-# log to STDOUT (https://github.com/docker-library/redmine/issues/108)
-	echo 'config.logger = Logger.new(STDOUT)' > config/additional_environment.rb; \
 # fix permissions for running as an arbitrary user
 	chmod -R ugo=rwX config db sqlite; \
 	find log tmp -type d -exec chmod 1777 '{}' +
@@ -103,7 +98,6 @@ RUN set -eux; \
 	chown -R redmine:redmine public
 
 RUN set -eux; \
-	\
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
@@ -112,6 +106,7 @@ RUN set -eux; \
 		gcc \
 		libxml2-dev \
 		libxslt-dev \
+		libyaml-dev \
 		make \
 		patch \
 		pkgconf \

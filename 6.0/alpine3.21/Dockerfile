@@ -1,4 +1,10 @@
-FROM ruby:{{ .ruby.version }}-{{ env.variant }}
+#
+# NOTE: THIS DOCKERFILE IS GENERATED VIA "apply-templates.sh"
+#
+# PLEASE DO NOT EDIT IT DIRECTLY.
+#
+
+FROM ruby:3.3-alpine3.21
 
 # explicitly set uid/gid to guarantee that it won't change in the future
 # the values 999:999 are identical to the current user/group id assigned
@@ -8,23 +14,19 @@ RUN addgroup -S -g 1000 redmine && adduser -S -H -G redmine -u 999 redmine
 RUN set -eux; \
 	apk add --no-cache \
 		bash \
+		breezy \
 		ca-certificates \
 		findutils \
-		tini \
-		tzdata \
-		wget \
-		\
-		breezy \
+		ghostscript \
+		ghostscript-fonts \
 		git \
+		imagemagick \
 		mercurial \
 		openssh-client \
 		subversion \
-		\
-# we need "gsfonts" for generating PNGs of Gantt charts
-# and "ghostscript" for creating PDF thumbnails (in 4.1+)
-		ghostscript \
-		ghostscript-fonts \
-		imagemagick \
+		tini \
+		tzdata \
+		wget \
 	;
 
 # grab gosu for easy step-down from root
@@ -33,7 +35,6 @@ ENV GOSU_VERSION 1.17
 RUN set -eux; \
 	\
 	apk add --no-cache --virtual .gosu-deps \
-		ca-certificates \
 		dpkg \
 		gnupg \
 	; \
@@ -53,9 +54,6 @@ RUN set -eux; \
 	chmod +x /usr/local/bin/gosu; \
 	gosu --version; \
 	gosu nobody true
-{{ if [ "5.0", "5.1" ] | index(env.version) then ( -}}
-RUN set -eux; ln -svf gosu /usr/local/bin/su-exec; su-exec nobody true # backwards compatibility (removed in Redmine 5.2+)
-{{ ) else "" end -}}
 
 ENV RAILS_ENV production
 WORKDIR /usr/src/redmine
@@ -69,19 +67,19 @@ RUN set -eux; \
 	chown redmine:redmine "$HOME"; \
 	chmod 1777 "$HOME"
 
-ENV REDMINE_VERSION {{ .version }}
-ENV REDMINE_DOWNLOAD_URL {{ .downloadUrl }}
-ENV REDMINE_DOWNLOAD_SHA256 {{ .sha256 }}
+ENV REDMINE_VERSION 6.0.3
+ENV REDMINE_DOWNLOAD_URL https://www.redmine.org/releases/redmine-6.0.3.tar.gz
+ENV REDMINE_DOWNLOAD_SHA256 48a139e9416f97922ab48231912fed8aa4c48d4a96b8f507124b11e4335218d6
+ENV RAILS_LOG_TO_STDOUT true
 
 RUN set -eux; \
 	wget -O redmine.tar.gz "$REDMINE_DOWNLOAD_URL"; \
 	echo "$REDMINE_DOWNLOAD_SHA256 *redmine.tar.gz" | sha256sum -c -; \
 	tar -xf redmine.tar.gz --strip-components=1; \
 	rm redmine.tar.gz files/delete.me log/delete.me; \
-	mkdir -p log public/plugin_assets sqlite tmp/pdf tmp/pids; \
+	# https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions
+	mkdir -p log public/assets public/plugin_assets sqlite tmp/pdf tmp/pids; \
 	chown -R redmine:redmine ./; \
-# log to STDOUT (https://github.com/docker-library/redmine/issues/108)
-	echo 'config.logger = Logger.new(STDOUT)' > config/additional_environment.rb; \
 # fix permissions for running as an arbitrary user
 	chmod -R ugo=rwX config db sqlite; \
 	find log tmp -type d -exec chmod 1777 '{}' +
@@ -89,7 +87,6 @@ RUN set -eux; \
 # build for musl-libc, not glibc (see https://github.com/sparklemotion/nokogiri/issues/2075, https://github.com/rubygems/rubygems/issues/3174)
 ENV BUNDLE_FORCE_RUBY_PLATFORM 1
 RUN set -eux; \
-	\
 	apk add --no-cache --virtual .build-deps \
 		coreutils \
 		freetds-dev \
@@ -101,6 +98,7 @@ RUN set -eux; \
 		postgresql-dev \
 		sqlite-dev \
 		ttf2ufm \
+		yaml-dev \
 		zlib-dev \
 	; \
 	\
@@ -120,7 +118,6 @@ RUN set -eux; \
 	rm ./config/database.yml; \
 # fix permissions for running as an arbitrary user
 	chmod -R ugo=rwX Gemfile.lock "$GEM_HOME"; \
-# this requires coreutils because "chmod +X" in busybox will remove +x on files (and coreutils leaves files alone with +X)
 	rm -rf ~redmine/.bundle; \
 	\
 # https://github.com/naitoh/rbpdf/issues/31
