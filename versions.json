@@ -1,47 +1,32 @@
 {
-  "5.0": {
-    "alpine": "3.21",
-    "debian": "bookworm",
-    "downloadUrl": "https://www.redmine.org/releases/redmine-5.0.11.tar.gz",
-    "ruby": {
-      "version": "3.1"
-    },
-    "sha256": "5ed58a0ba26932158ed4e90eedbbcb8952018f15df9c51473097a68f09870838",
-    "variants": [
-      "bookworm",
-      "alpine3.21",
-      "alpine3.20"
-    ],
-    "version": "5.0.11"
-  },
   "5.1": {
     "alpine": "3.21",
     "debian": "bookworm",
-    "downloadUrl": "https://www.redmine.org/releases/redmine-5.1.6.tar.gz",
+    "downloadUrl": "https://www.redmine.org/releases/redmine-5.1.7.tar.gz",
     "ruby": {
       "version": "3.2"
     },
-    "sha256": "d73584e74d692aa94644799d986df4e846fb59a43205c16bd857ed56cf0abed9",
+    "sha256": "c75c7de225b3c9e920dbdf2eddda6c7b454221a9988907711a710d83e502731e",
     "variants": [
       "bookworm",
       "alpine3.21",
       "alpine3.20"
     ],
-    "version": "5.1.6"
+    "version": "5.1.7"
   },
   "6.0": {
     "alpine": "3.21",
     "debian": "bookworm",
-    "downloadUrl": "https://www.redmine.org/releases/redmine-6.0.3.tar.gz",
+    "downloadUrl": "https://www.redmine.org/releases/redmine-6.0.4.tar.gz",
     "ruby": {
       "version": "3.3"
     },
-    "sha256": "48a139e9416f97922ab48231912fed8aa4c48d4a96b8f507124b11e4335218d6",
+    "sha256": "bebf8acb4fd1843f88e5f4285ff0b497fab43320c33e780a5c34e1124c5e177a",
     "variants": [
       "bookworm",
       "alpine3.21",
       "alpine3.20"
     ],
-    "version": "6.0.3"
+    "version": "6.0.4"
   }
 }
